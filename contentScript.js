@@ -126,14 +126,97 @@
     };
   }
 
-  const result = detectSubscription();
-  if (result) {
-    chrome.runtime.sendMessage({ type: 'subscriptionDetected', payload: result }, response => {
-      if (chrome.runtime.lastError) {
-        console.debug('Subscription Sentinel: unable to send detection', chrome.runtime.lastError);
-      } else if (response && response.received) {
-        console.debug('Subscription Sentinel: detection stored', response);
-      }
-    });
+  const pendingDetection = detectSubscription();
+  if (!pendingDetection) {
+    return;
   }
+
+  let dispatched = false;
+
+  const ACTION_KEYWORDS = [
+    'subscribe',
+    'subscription',
+    'trial',
+    'start plan',
+    'start membership',
+    'start free',
+    'start my',
+    'checkout',
+    'complete order',
+    'place order',
+    'join now',
+    'confirm'
+  ];
+
+  function hasKeyword(text) {
+    if (!text) return false;
+    const lower = text.toLowerCase();
+    return ACTION_KEYWORDS.some(keyword => lower.includes(keyword));
+  }
+
+  function elementLabel(element) {
+    if (!element) return '';
+    const attr = element.getAttribute('aria-label') || element.getAttribute('title');
+    if (attr) {
+      return attr;
+    }
+    if (element instanceof HTMLInputElement) {
+      return element.value || element.placeholder || '';
+    }
+    return element.innerText || element.textContent || '';
+  }
+
+  function dispatchDetection(trigger) {
+    if (dispatched) {
+      return;
+    }
+    dispatched = true;
+    document.removeEventListener('submit', onSubmit, true);
+    document.removeEventListener('click', onClick, true);
+
+    chrome.runtime.sendMessage(
+      {
+        type: 'subscriptionDetected',
+        payload: { ...pendingDetection, trigger }
+      },
+      response => {
+        if (chrome.runtime.lastError) {
+          console.debug('Subscription Sentinel: unable to send detection', chrome.runtime.lastError);
+        } else if (response && response.received) {
+          console.debug('Subscription Sentinel: detection stored', response);
+        }
+      }
+    );
+  }
+
+  function onSubmit(event) {
+    if (!event.isTrusted) {
+      return;
+    }
+    const submitter = event.submitter;
+    if (submitter && hasKeyword(elementLabel(submitter))) {
+      dispatchDetection('form-submit');
+      return;
+    }
+    const form = event.target;
+    if (form && hasKeyword(elementLabel(form))) {
+      dispatchDetection('form-submit');
+    }
+  }
+
+  function onClick(event) {
+    if (!event.isTrusted) {
+      return;
+    }
+    const actionable = event.target.closest('button, [role="button"], input[type="submit"], input[type="button"], a');
+    if (!actionable) {
+      return;
+    }
+    if (hasKeyword(elementLabel(actionable))) {
+      dispatchDetection('click');
+    }
+  }
+
+  document.addEventListener('submit', onSubmit, true);
+  document.addEventListener('click', onClick, true);
 })();

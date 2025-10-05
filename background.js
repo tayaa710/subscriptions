@@ -111,6 +111,7 @@ async function handleDetection(payload) {
     existing.recurrence = recurrence;
     existing.nextRollover = rollover;
     await setSubscriptions(subscriptions);
+    await openActionPopup();
     await scheduleAlarm(existing);
     await createDetectionNotification(existing, true);
     return { id: existing.id, updated: true };
@@ -130,9 +131,25 @@ async function handleDetection(payload) {
 
   subscriptions.push(subscription);
   await setSubscriptions(subscriptions);
+  await openActionPopup();
   await scheduleAlarm(subscription);
   await createDetectionNotification(subscription, false);
   return { id: subscription.id, updated: false };
+}
+
+async function openActionPopup() {
+  if (!chrome.action || typeof chrome.action.openPopup !== 'function') {
+    return;
+  }
+
+  try {
+    const maybePromise = chrome.action.openPopup();
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      await maybePromise;
+    }
+  } catch (error) {
+    console.debug('Subscription Sentinel: failed to open popup automatically', error);
+  }
 }
 
 async function createDetectionNotification(subscription, updated) {
