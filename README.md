@@ -39,21 +39,7 @@ popup.html/.css/.js  # Popup UI for viewing and managing saved subscriptions
 
 ## Testing the detection heuristics
 
-### Using the bundled demo page
-
-1. From this repository, run a lightweight web server:
-   ```bash
-   cd test-site
-   python -m http.server 5500
-   ```
-2. Visit <http://localhost:5500> in Chrome and load the extension's popup. The demo checkout page contains phrases like
-   “14-day free trial” and “$19.99 per month,” which the content script should detect automatically. A notification should fire
-   shortly after the page is scanned and the subscription should appear in the popup list.
-
-### Crafting your own test page
-
-You can also create a simple HTML file with subscription language and load it via a `file://` URL. Include phrases like
-“7-day free trial” or “$9.99 per month” so the regexes latch onto them.
+You can simulate a detection by creating a simple HTML page with subscription language and loading it via a `file://` URL. The page text should include phrases like “7-day free trial” or “$9.99 per month” for the regexes to latch onto.
 
 ## Privacy
 
