@@ -27,6 +27,7 @@ popup.html/.css/.js  # Popup UI for viewing and managing saved subscriptions
    - Generic cadence language (e.g., “billed annually”).
 2. Matches are normalized to capture the duration (in days) and billing period.
 3. After you interact with the checkout flow (e.g., submitting the form or clicking a “start trial” button), the data is sent to the background service worker, which deduplicates entries per URL, stores them, and schedules notifications.
+3. The data is sent to the background service worker, which deduplicates entries per URL, stores them, and schedules notifications.
 4. Reminders fire one day before the computed rollover. If a billing cadence is available, the reminder recurs on that cadence.
 
 > ℹ️ Detection is heuristic based. For checkout flows rendered inside iframes or heavily scripted experiences, it may miss some offers. You can still add them manually by browsing to confirmation pages or using the popup once support is added.
@@ -53,6 +54,11 @@ popup.html/.css/.js  # Popup UI for viewing and managing saved subscriptions
 
 You can also create a simple HTML file with subscription language and load it via a `file://` URL. Include phrases like
 “7-day free trial” or “$9.99 per month” so the regexes latch onto them.
+4. Navigate to a subscription checkout page—if the extension spots relevant text it will save it automatically and notify you.
+
+## Testing the detection heuristics
+
+You can simulate a detection by creating a simple HTML page with subscription language and loading it via a `file://` URL. The page text should include phrases like “7-day free trial” or “$9.99 per month” for the regexes to latch onto.
 
 ## Privacy
 
