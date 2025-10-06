@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SubTrackr</title>
+    <!-- Primary popup styles keep the UI compact and legible. -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Container element keeps layout consistent. -->
+    <main id="app">
+      <header>
+        <h1>SubTrackr</h1>
+        <p class="subtitle">Private subscription snapshots</p>
+      </header>
+
+      <!-- Detection panel shows the latest subscription prompt when available. -->
+      <section id="detection-panel" hidden>
+        <h2>Latest detection</h2>
+        <p id="detection-message"></p>
+        <div class="actions">
+          <button id="save-detection">Save</button>
+          <button id="ignore-detection" class="secondary">Ignore</button>
+        </div>
+      </section>
+
+      <!-- Status banner provides lightweight feedback after actions. -->
+      <div id="status" role="status" aria-live="polite"></div>
+
+      <!-- View saved button toggles the stored subscription list. -->
+      <button id="view-saved" class="full-width">View Saved</button>
+
+      <section id="saved-list" hidden>
+        <h2>Saved subscriptions</h2>
+        <ul id="records"></ul>
+        <button id="clear-all" class="danger">Delete All</button>
+      </section>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
