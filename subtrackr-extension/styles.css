@@ -1,0 +1,109 @@
+/* styles.css
+ * Minimal styling that keeps the popup uncluttered and readable.
+ */
+
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+}
+
+#app {
+  padding: 16px;
+}
+
+header {
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-size: 1.2rem;
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #cbd5f5;
+}
+
+section {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+button#save-detection,
+button#view-saved {
+  background: #10b981;
+  color: #f8fafc;
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #cbd5f5;
+}
+
+button.danger {
+  width: 100%;
+  background: #f43f5e;
+  color: #f8fafc;
+}
+
+button.full-width {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+#status {
+  min-height: 20px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+#records {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#records li {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 6px;
+  padding: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+#records .timestamp {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}

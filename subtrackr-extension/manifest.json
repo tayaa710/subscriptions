@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "SubTrackr",
+  "version": "1.0.0",
+  "description": "Detect and locally track subscription-related actions without collecting personal information.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "SubTrackr",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
