@@ -1,42 +1,179 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SubTrackr</title>
-    <!-- Primary popup styles keep the UI compact and legible. -->
+    <!-- Inter font for the brand system. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Primary popup styles with light/dark design tokens. -->
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- Container element keeps layout consistent. -->
-    <main id="app">
-      <header>
-        <h1>SubTrackr</h1>
-        <p class="subtitle">Private subscription snapshots</p>
+    <!-- Main popup wrapper sized for a 350 × 600 viewport. -->
+    <main class="popup" role="application">
+      <!-- Header: brand identity and reassuring tagline. -->
+      <header class="popup__header card card--elevated">
+        <div class="brand">
+          <img
+            src="icons/subtrackr-48.svg"
+            width="40"
+            height="40"
+            alt="SubTrackr shield logo"
+            class="brand__logo"
+          />
+          <div class="brand__copy">
+            <h1 class="brand__title">SubTrackr</h1>
+            <p class="brand__tagline">Your subscriptions, under control — privately.</p>
+          </div>
+        </div>
+        <div class="trust-copy" role="note">
+          <strong>No sensitive data leaves your device.</strong> Everything is stored locally.
+        </div>
       </header>
 
-      <!-- Detection panel shows the latest subscription prompt when available. -->
-      <section id="detection-panel" hidden>
-        <h2>Latest detection</h2>
-        <p id="detection-message"></p>
-        <div class="actions">
-          <button id="save-detection">Save</button>
-          <button id="ignore-detection" class="secondary">Ignore</button>
+      <!-- Current tab information showing favicon and domain. -->
+      <section class="card card--surface tab-overview" aria-labelledby="tab-info-heading">
+        <div class="section-heading">
+          <h2 id="tab-info-heading">Current site</h2>
+          <span class="heading-meta">Monitored privately</span>
+        </div>
+        <div class="tab-overview__details">
+          <img
+            src="icons/sample-favicon.svg"
+            alt="Sample favicon"
+            class="tab-overview__favicon"
+            id="tab-favicon"
+            width="28"
+            height="28"
+          />
+          <div class="tab-overview__text">
+            <span class="tab-overview__domain" id="tab-domain">example.com</span>
+            <span class="tab-overview__context" id="tab-path">/pricing</span>
+          </div>
         </div>
       </section>
 
-      <!-- Status banner provides lightweight feedback after actions. -->
-      <div id="status" role="status" aria-live="polite"></div>
-
-      <!-- View saved button toggles the stored subscription list. -->
-      <button id="view-saved" class="full-width">View Saved</button>
-
-      <section id="saved-list" hidden>
-        <h2>Saved subscriptions</h2>
-        <ul id="records"></ul>
-        <button id="clear-all" class="danger">Delete All</button>
+      <!-- Detection alert card shows when keywords are found. -->
+      <section
+        class="card card--alert detection"
+        id="detection-card"
+        aria-live="polite"
+        hidden
+      >
+        <div class="section-heading">
+          <h2>Detected possible subscription</h2>
+          <span class="badge badge--accent" id="detection-keyword">keyword: "annual plan"</span>
+        </div>
+        <p class="detection__summary">
+          We spotted recurring language from <strong id="detection-service">Streamly Plus</strong>.
+          Save it for review?
+        </p>
+        <div class="detection__actions">
+          <button class="btn btn-primary" id="save-detection">Save</button>
+          <button class="btn btn-neutral" id="ignore-detection">Ignore</button>
+        </div>
       </section>
+
+      <!-- Saved subscription list with sample entries. -->
+      <section class="card card--surface" aria-labelledby="saved-heading">
+        <div class="section-heading">
+          <h2 id="saved-heading">Saved subscriptions</h2>
+          <span class="heading-meta" id="saved-count">3 tracked</span>
+        </div>
+        <div class="saved-list" role="list" id="saved-scroll">
+          <article class="saved-item sample" data-sample="true">
+            <div class="saved-item__header">
+              <h3 class="saved-item__title">Streamly Plus</h3>
+              <time class="saved-item__time" datetime="2024-04-12T10:21:00">Apr 12, 2024 · 10:21 AM</time>
+            </div>
+            <p class="saved-item__detail">Keyword match: "annual plan" — Pricing page</p>
+          </article>
+          <article class="saved-item sample" data-sample="true">
+            <div class="saved-item__header">
+              <h3 class="saved-item__title">InboxPro Mailer</h3>
+              <time class="saved-item__time" datetime="2024-04-10T19:05:00">Apr 10, 2024 · 7:05 PM</time>
+            </div>
+            <p class="saved-item__detail">Keyword match: "upgrade subscription" — Settings</p>
+          </article>
+          <article class="saved-item sample" data-sample="true">
+            <div class="saved-item__header">
+              <h3 class="saved-item__title">CloudDrive</h3>
+              <time class="saved-item__time" datetime="2024-03-30T08:44:00">Mar 30, 2024 · 8:44 AM</time>
+            </div>
+            <p class="saved-item__detail">Keyword match: "billing renewal" — Account</p>
+          </article>
+          <p class="saved-empty" id="saved-empty" hidden>No subscriptions saved yet.</p>
+        </div>
+      </section>
+
+      <!-- Footer actions for quick management. -->
+      <footer class="popup__footer">
+        <button class="btn btn-neutral" id="clear-all" type="button">Clear All</button>
+        <button class="btn btn-outline" id="open-settings" type="button">Open Settings</button>
+      </footer>
     </main>
+
+    <!-- Settings modal overlay for personalization options. -->
+    <div class="modal" id="settings-modal" hidden>
+      <div class="modal__backdrop" data-close-modal></div>
+      <div class="modal__dialog card card--surface" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <header class="modal__header">
+          <div>
+            <h2 id="settings-title">Settings</h2>
+            <p class="modal__subtitle">Tailor SubTrackr to your workflow.</p>
+          </div>
+          <button class="icon-button" type="button" id="close-settings" aria-label="Close settings">
+            <span aria-hidden="true">×</span>
+          </button>
+        </header>
+        <form class="modal__content">
+          <label class="toggle">
+            <input type="checkbox" id="notifications-toggle" checked />
+            <span class="toggle__control" aria-hidden="true"></span>
+            <span class="toggle__label">Desktop notifications</span>
+          </label>
+
+          <label class="toggle">
+            <input type="checkbox" id="theme-toggle" />
+            <span class="toggle__control" aria-hidden="true"></span>
+            <span class="toggle__label">Dark theme</span>
+          </label>
+
+          <label class="slider" for="keyword-sensitivity">
+            <span class="slider__label">Keyword sensitivity</span>
+            <input
+              type="range"
+              id="keyword-sensitivity"
+              name="keyword-sensitivity"
+              min="1"
+              max="5"
+              value="3"
+            />
+            <div class="slider__scale" aria-hidden="true">
+              <span>Low</span>
+              <span>High</span>
+            </div>
+          </label>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast template for content script injection preview. -->
+    <template id="subtrackr-toast-template">
+      <div class="subtrackr-toast" role="status" aria-live="polite">
+        <span class="subtrackr-toast__text">SubTrackr detected subscription on this page</span>
+        <div class="subtrackr-toast__actions">
+          <button class="btn btn-primary">Save</button>
+          <button class="btn btn-neutral">Dismiss</button>
+        </div>
+      </div>
+    </template>
 
     <script type="module" src="popup.js"></script>
   </body>

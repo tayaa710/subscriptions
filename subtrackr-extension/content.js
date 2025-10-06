@@ -1,5 +1,5 @@
 // content.js
-// Detects subscription-related interactions and surfaces an inline banner for user consent.
+// Detects subscription-related interactions and renders a branded toast overlay.
 
 const KEYWORDS = [
   'subscribe',
@@ -11,25 +11,23 @@ const KEYWORDS = [
   'upgrade',
 ].map((keyword) => keyword.toLowerCase());
 
+const TOAST_STYLE_ID = 'subtrackr-toast-styles';
+const AUTO_HIDE_MS = 10000;
+
 let bannerElement = null;
 let currentDetection = null;
+let autoHideTimeoutId = null;
 let successTimeoutId = null;
 
-/**
- * Quickly checks whether the provided text contains any subscription keyword.
- * @param {string} text
- * @returns {boolean}
- */
+/* -------------------------------------------- */
+/* Utility helpers                              */
+/* -------------------------------------------- */
 function matchesKeywords(text) {
   if (!text) return false;
   const normalized = text.toLowerCase();
   return KEYWORDS.some((keyword) => normalized.includes(keyword));
 }
 
-/**
- * Safely extracts the visible text content from an element without touching inputs.
- * @param {Element} element
- */
 function extractText(element) {
   if (!element) return '';
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
@@ -38,10 +36,6 @@ function extractText(element) {
   return (element.textContent || '').trim();
 }
 
-/**
- * Sends a detection message to the background service worker.
- * @param {string} detectedText
- */
 function reportDetection(detectedText) {
   const payload = {
     serviceName: window.location.hostname,
@@ -52,60 +46,177 @@ function reportDetection(detectedText) {
   chrome.runtime.sendMessage({ type: 'subscription-detected', payload });
 }
 
-/**
- * Removes the banner and clears any timers.
- */
-function dismissBanner() {
-  if (bannerElement?.parentNode) {
-    bannerElement.parentNode.removeChild(bannerElement);
+function insertToastStyles() {
+  if (document.getElementById(TOAST_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = TOAST_STYLE_ID;
+  style.textContent = `
+    @keyframes subtrackr-toast-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes subtrackr-toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(12px); }
+    }
+    #subtrackr-toast-banner {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 2147483647;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 320px;
+      width: 100%;
+      background: #111827;
+      color: #f9fafb;
+      border-radius: 0.75rem;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 1rem 1.125rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      animation: subtrackr-toast-in 200ms ease forwards;
+    }
+    #subtrackr-toast-banner.subtrackr-toast-exit {
+      animation: subtrackr-toast-out 200ms ease forwards;
+    }
+    #subtrackr-toast-banner .subtrackr-toast__header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    #subtrackr-toast-banner .subtrackr-toast__icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+    #subtrackr-toast-banner .subtrackr-toast__message {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin: 0;
+    }
+    #subtrackr-toast-banner .subtrackr-toast__actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+    #subtrackr-toast-banner button {
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.45rem 0.95rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms ease, color 150ms ease;
+    }
+    #subtrackr-toast-banner button.subtrackr-save {
+      background: #2563eb;
+      color: #f9fafb;
+    }
+    #subtrackr-toast-banner button.subtrackr-save:hover {
+      background: #1d4ed8;
+    }
+    #subtrackr-toast-banner button.subtrackr-dismiss {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f9fafb;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+    #subtrackr-toast-banner button.subtrackr-dismiss:hover {
+      background: rgba(148, 163, 184, 0.2);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #subtrackr-toast-banner {
+        animation: none;
+      }
+      #subtrackr-toast-banner.subtrackr-toast-exit {
+        animation: none;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function clearTimers() {
+  if (autoHideTimeoutId) {
+    window.clearTimeout(autoHideTimeoutId);
+    autoHideTimeoutId = null;
   }
-  bannerElement = null;
-  currentDetection = null;
   if (successTimeoutId) {
-    clearTimeout(successTimeoutId);
+    window.clearTimeout(successTimeoutId);
     successTimeoutId = null;
   }
 }
 
-/**
- * Builds (if necessary) and displays the floating consent banner.
- * @param {object} detection
- */
+function dismissBanner({ immediate = false } = {}) {
+  if (!bannerElement) return;
+  clearTimers();
+
+  const remove = () => {
+    if (bannerElement?.parentNode) {
+      bannerElement.parentNode.removeChild(bannerElement);
+    }
+    bannerElement = null;
+    currentDetection = null;
+  };
+
+  if (immediate) {
+    remove();
+    return;
+  }
+
+  bannerElement.classList.add('subtrackr-toast-exit');
+  bannerElement.addEventListener(
+    'animationend',
+    () => {
+      remove();
+    },
+    { once: true }
+  );
+}
+
+function scheduleAutoHide() {
+  clearTimers();
+  autoHideTimeoutId = window.setTimeout(() => {
+    dismissBanner();
+  }, AUTO_HIDE_MS);
+}
+
 function showBanner(detection) {
   currentDetection = detection;
+  insertToastStyles();
 
   if (!bannerElement) {
     bannerElement = document.createElement('div');
-    bannerElement.id = 'subtrackr-banner';
-    bannerElement.style.position = 'fixed';
-    bannerElement.style.bottom = '20px';
-    bannerElement.style.right = '20px';
-    bannerElement.style.zIndex = '2147483647';
-    bannerElement.style.background = '#1f2937';
-    bannerElement.style.color = '#f9fafb';
-    bannerElement.style.padding = '16px';
-    bannerElement.style.borderRadius = '8px';
-    bannerElement.style.boxShadow = '0 10px 30px rgba(15, 23, 42, 0.2)';
-    bannerElement.style.maxWidth = '320px';
-    bannerElement.style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    bannerElement.id = 'subtrackr-toast-banner';
 
-    const message = document.createElement('div');
-    message.id = 'subtrackr-message';
-    message.style.marginBottom = '12px';
-    bannerElement.appendChild(message);
+    const header = document.createElement('div');
+    header.className = 'subtrackr-toast__header';
+
+    const icon = document.createElement('span');
+    icon.className = 'subtrackr-toast__icon';
+
+    const title = document.createElement('span');
+    title.textContent = 'SubTrackr';
+
+    header.appendChild(icon);
+    header.appendChild(title);
+
+    const message = document.createElement('p');
+    message.className = 'subtrackr-toast__message';
+    message.id = 'subtrackr-toast-message';
 
     const actions = document.createElement('div');
-    actions.style.display = 'flex';
-    actions.style.gap = '8px';
+    actions.className = 'subtrackr-toast__actions';
 
     const saveButton = document.createElement('button');
+    saveButton.type = 'button';
+    saveButton.className = 'subtrackr-save';
     saveButton.textContent = 'Save';
-    saveButton.style.background = '#10b981';
-    saveButton.style.color = '#f9fafb';
-    saveButton.style.border = 'none';
-    saveButton.style.padding = '8px 14px';
-    saveButton.style.borderRadius = '6px';
-    saveButton.style.cursor = 'pointer';
     saveButton.addEventListener('click', () => {
       if (!currentDetection) return;
       chrome.runtime.sendMessage({
@@ -114,38 +225,40 @@ function showBanner(detection) {
       });
     });
 
-    const ignoreButton = document.createElement('button');
-    ignoreButton.textContent = 'Ignore';
-    ignoreButton.style.background = 'transparent';
-    ignoreButton.style.color = '#cbd5f5';
-    ignoreButton.style.border = '1px solid #4b5563';
-    ignoreButton.style.padding = '8px 14px';
-    ignoreButton.style.borderRadius = '6px';
-    ignoreButton.style.cursor = 'pointer';
-    ignoreButton.addEventListener('click', () => {
+    const dismissButton = document.createElement('button');
+    dismissButton.type = 'button';
+    dismissButton.className = 'subtrackr-dismiss';
+    dismissButton.textContent = 'Dismiss';
+    dismissButton.addEventListener('click', () => {
       chrome.runtime.sendMessage({ type: 'clear-pending' });
       dismissBanner();
     });
 
     actions.appendChild(saveButton);
-    actions.appendChild(ignoreButton);
+    actions.appendChild(dismissButton);
+
+    bannerElement.appendChild(header);
+    bannerElement.appendChild(message);
     bannerElement.appendChild(actions);
   }
 
-  const messageElement = bannerElement.querySelector('#subtrackr-message');
+  const messageElement = bannerElement.querySelector('#subtrackr-toast-message');
   if (messageElement) {
-    messageElement.textContent = `Detected possible subscription on ${detection.serviceName}. Save this subscription?`;
+    messageElement.textContent = 'SubTrackr detected subscription on this page';
   }
+
+  bannerElement.classList.remove('subtrackr-toast-exit');
 
   if (!bannerElement.parentNode) {
-    document.body.appendChild(bannerElement);
+    (document.body || document.documentElement).appendChild(bannerElement);
   }
+
+  scheduleAutoHide();
 }
 
-/**
- * Evaluates clicks and submissions for subscription intent.
- * @param {Event} event
- */
+/* -------------------------------------------- */
+/* Interaction listeners                        */
+/* -------------------------------------------- */
 function handleInteraction(event) {
   const target = event.target;
   const submitter = event.submitter;
@@ -162,7 +275,6 @@ function handleInteraction(event) {
 document.addEventListener('click', handleInteraction, true);
 document.addEventListener('submit', handleInteraction, true);
 
-// Listen for instructions from the background worker to display or hide UI feedback.
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'show-detection') {
     showBanner(message.detection);
@@ -170,10 +282,11 @@ chrome.runtime.onMessage.addListener((message) => {
 
   if (message.type === 'subscription-saved') {
     if (bannerElement) {
-      const messageElement = bannerElement.querySelector('#subtrackr-message');
+      const messageElement = bannerElement.querySelector('#subtrackr-toast-message');
       if (messageElement) {
         messageElement.textContent = 'Subscription saved locally.';
       }
+      clearTimers();
       successTimeoutId = window.setTimeout(() => {
         dismissBanner();
       }, 1800);

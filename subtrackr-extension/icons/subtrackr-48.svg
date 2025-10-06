@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title>SubTrackr shield logo</title>
+  <defs>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+  </defs>
+  <path fill="url(#shieldGradient)" d="M64 8a12 12 0 0 0-4.6.9L28 22.6a8 8 0 0 0-5 7.4V61c0 27.4 18.2 52.8 43.8 61.4a8 8 0 0 0 5.4 0C97.8 113.8 116 88.4 116 61V30a8 8 0 0 0-5-7.4L68.6 8.9A12 12 0 0 0 64 8Z" />
+  <path fill="#F9FAFB" d="M84 44c0-8.84-7.16-16-16-16H56c-8.84 0-16 7.16-16 16s7.16 16 16 16h12c4.42 0 8 3.58 8 8s-3.58 8-8 8H56c-8.84 0-16 7.16-16 16s7.16 16 16 16h12c8.84 0 16-7.16 16-16H72c0 2.21-1.79 4-4 4H56c-2.21 0-4-1.79-4-4s1.79-4 4-4h12c8.84 0 16-7.16 16-16s-7.16-16-16-16H56c-2.21 0-4-1.79-4-4s1.79-4 4-4h12c2.21 0 4 1.79 4 4z" />
+</svg>
