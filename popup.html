@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Subscription Sentinel</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Subscription Sentinel</h1>
+      <button id="refresh" title="Refresh detections">⟳</button>
+    </header>
+    <main>
+      <section id="pending" class="pending-card" hidden>
+        <h2 id="pending-title">Save this subscription?</h2>
+        <p id="pending-context"></p>
+        <dl>
+          <div class="row">
+            <dt>Trial</dt>
+            <dd id="pending-trial"></dd>
+          </div>
+          <div class="row">
+            <dt>Billing</dt>
+            <dd id="pending-billing"></dd>
+          </div>
+          <div class="row">
+            <dt>Link</dt>
+            <dd><a id="pending-url" target="_blank" rel="noopener">Open page</a></dd>
+          </div>
+        </dl>
+        <div class="pending-actions">
+          <button id="pending-save" class="primary">Save</button>
+          <button id="pending-dismiss" class="secondary">Don't save</button>
+        </div>
+      </section>
+      <p id="empty">No subscriptions detected yet. Browse a checkout page with free trial or billing terms and we'll capture it.</p>
+      <ul id="list"></ul>
+    </main>
+    <template id="subscription-template">
+      <li class="subscription">
+        <div class="title-row">
+          <span class="name"></span>
+          <button class="remove" title="Remove subscription">✕</button>
+        </div>
+        <dl>
+          <div class="row trial">
+            <dt>Trial</dt>
+            <dd class="trial-value"></dd>
+          </div>
+          <div class="row billing">
+            <dt>Billing</dt>
+            <dd class="billing-value"></dd>
+          </div>
+          <div class="row reminder">
+            <dt>Next reminder</dt>
+            <dd class="reminder-value"></dd>
+          </div>
+          <div class="row link">
+            <dt>Link</dt>
+            <dd><a class="url" target="_blank" rel="noopener">Open page</a></dd>
+          </div>
+        </dl>
+      </li>
+    </template>
+    <script src="popup.js"></script>
+  </body>
+</html>
