@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acme Productivity Suite – Trial Checkout</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: linear-gradient(145deg, #f2f6ff, #e3ecff);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+
+      main {
+        background: white;
+        border-radius: 18px;
+        box-shadow: 0 20px 55px -25px rgba(32, 56, 120, 0.35);
+        width: min(560px, 90vw);
+        padding: 2.75rem 3rem;
+      }
+
+      h1 {
+        margin-top: 0;
+        font-size: clamp(2rem, 5vw, 2.6rem);
+        color: #213b7a;
+      }
+
+      p {
+        line-height: 1.6;
+        color: #405275;
+      }
+
+      .plan {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        border: 1px solid rgba(33, 59, 122, 0.15);
+        border-radius: 14px;
+        background: rgba(86, 113, 196, 0.06);
+      }
+
+      .plan h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        color: #2f4a92;
+      }
+
+      .price {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #1c2c5b;
+        margin: 0.75rem 0 0;
+      }
+
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1.8rem;
+        font-size: 1.05rem;
+        border-radius: 999px;
+        border: none;
+        background: #315efb;
+        color: white;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease;
+      }
+
+      .cta:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 20px -12px rgba(49, 94, 251, 0.6);
+      }
+
+      .billing-details {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px dashed rgba(63, 80, 127, 0.4);
+        color: #334669;
+      }
+
+      footer {
+        margin-top: 2.5rem;
+        font-size: 0.95rem;
+        color: #53668e;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Try Acme Productivity Suite</h1>
+      <p>
+        Streamline your team's workflow with collaborative docs, kanban boards, and
+        automated reporting. Start today with a no-commitment trial and unlock premium
+        features.
+      </p>
+
+      <section class="plan" aria-label="Subscription plan">
+        <h2>Pro Team Plan</h2>
+        <p class="price">$19.99 per month</p>
+        <p>
+          Start your <strong>14-day free trial</strong>. After the trial ends you will be billed
+          $19.99 every month using the payment method provided below. Cancel any time before
+          <span class="trial-end-date">April 18</span> to avoid being charged.
+        </p>
+        <div class="billing-details">
+          <p><strong>Billing cadence:</strong> Billed monthly after the 14-day trial.</p>
+          <p><strong>Renewal reminder:</strong> We'll email you 3 days before renewal.</p>
+        </div>
+        <button class="cta" type="button">Start free trial</button>
+      </section>
+
+      <footer>
+        Need a yearly plan? Upgrade later for <strong>$199.99 per year</strong> billed annually.
+      </footer>
+    </main>
+  </body>
+</html>
