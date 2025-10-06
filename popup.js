@@ -2,10 +2,26 @@ const listEl = document.getElementById('list');
 const emptyEl = document.getElementById('empty');
 const template = document.getElementById('subscription-template');
 const refreshBtn = document.getElementById('refresh');
+const pendingSection = document.getElementById('pending');
+const pendingTitle = document.getElementById('pending-title');
+const pendingContext = document.getElementById('pending-context');
+const pendingTrial = document.getElementById('pending-trial');
+const pendingBilling = document.getElementById('pending-billing');
+const pendingUrl = document.getElementById('pending-url');
+const pendingSave = document.getElementById('pending-save');
+const pendingDismiss = document.getElementById('pending-dismiss');
+
+let currentPending = null;
+let pendingInFlight = false;
 
 async function fetchSubscriptions() {
   const data = await chrome.storage.local.get({ subscriptions: [] });
   return data.subscriptions.sort((a, b) => (b.detectedAt || '').localeCompare(a.detectedAt || ''));
+}
+
+async function fetchPendingDetection() {
+  const data = await chrome.storage.local.get({ pendingDetection: null });
+  return data.pendingDetection;
 }
 
 function formatTrial(trial) {
@@ -44,6 +60,61 @@ function formatReminder(timestamp) {
   return new Date(timestamp).toLocaleString();
 }
 
+function formatUrl(url) {
+  try {
+    return new URL(url).hostname;
+  } catch (error) {
+    return url;
+  }
+}
+
+function renderPending(pending) {
+  currentPending = pending;
+  pendingInFlight = false;
+  pendingSave.disabled = false;
+  pendingDismiss.disabled = false;
+
+  if (!pending) {
+    pendingSection.hidden = true;
+    return;
+  }
+
+  pendingSection.hidden = false;
+  const host = formatUrl(pending.url);
+  pendingTitle.textContent = pending.existingId
+    ? 'Update saved subscription?'
+    : 'Save this subscription?';
+  pendingContext.textContent = pending.existingId
+    ? `We spotted updated terms for ${host}.`
+    : `We found a subscription on ${host}.`;
+  pendingTrial.innerHTML = formatTrial(pending.trial);
+  pendingBilling.innerHTML = formatBilling(pending.billing);
+  pendingUrl.href = pending.url;
+  pendingUrl.textContent = host || 'Open page';
+}
+
+async function resolvePending(decision) {
+  if (!currentPending || pendingInFlight) {
+    return;
+  }
+
+  pendingInFlight = true;
+  pendingSave.disabled = true;
+  pendingDismiss.disabled = true;
+
+  try {
+    await chrome.runtime.sendMessage({
+      type: 'resolvePendingDetection',
+      decision,
+      token: currentPending.token
+    });
+  } catch (error) {
+    console.debug('Subscription Sentinel: failed to resolve pending detection', error);
+  }
+
+  await load();
+}
+
 function renderSubscription(subscription) {
   const fragment = template.content.cloneNode(true);
   const root = fragment.querySelector('.subscription');
@@ -67,10 +138,15 @@ function renderSubscription(subscription) {
 }
 
 async function load() {
-  const subscriptions = await fetchSubscriptions();
+  const [pending, subscriptions] = await Promise.all([
+    fetchPendingDetection(),
+    fetchSubscriptions()
+  ]);
+
+  renderPending(pending);
   listEl.innerHTML = '';
   if (!subscriptions.length) {
-    emptyEl.style.display = 'block';
+    emptyEl.style.display = pending ? 'none' : 'block';
     return;
   }
   emptyEl.style.display = 'none';
@@ -78,11 +154,13 @@ async function load() {
 }
 
 refreshBtn.addEventListener('click', load);
+pendingSave.addEventListener('click', () => resolvePending('save'));
+pendingDismiss.addEventListener('click', () => resolvePending('dismiss'));
 
 document.addEventListener('DOMContentLoaded', load);
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.subscriptions) {
+  if (area === 'local' && (changes.subscriptions || changes.pendingDetection)) {
     load();
   }
 });

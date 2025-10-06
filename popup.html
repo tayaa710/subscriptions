@@ -11,6 +11,28 @@
       <button id="refresh" title="Refresh detections">⟳</button>
     </header>
     <main>
+      <section id="pending" class="pending-card" hidden>
+        <h2 id="pending-title">Save this subscription?</h2>
+        <p id="pending-context"></p>
+        <dl>
+          <div class="row">
+            <dt>Trial</dt>
+            <dd id="pending-trial"></dd>
+          </div>
+          <div class="row">
+            <dt>Billing</dt>
+            <dd id="pending-billing"></dd>
+          </div>
+          <div class="row">
+            <dt>Link</dt>
+            <dd><a id="pending-url" target="_blank" rel="noopener">Open page</a></dd>
+          </div>
+        </dl>
+        <div class="pending-actions">
+          <button id="pending-save" class="primary">Save</button>
+          <button id="pending-dismiss" class="secondary">Don't save</button>
+        </div>
+      </section>
       <p id="empty">No subscriptions detected yet. Browse a checkout page with free trial or billing terms and we'll capture it.</p>
       <ul id="list"></ul>
     </main>

@@ -20,9 +20,10 @@
 
   function extractTrial(text) {
     const trialPatterns = [
-      /(\d+)\s*(day|week|month|year)s?\s*(?:free\s*)?trial/i,
-      /trial\s*period\s*:?\s*(\d+)\s*(day|week|month|year)s?/i,
-      /(free|complimentary) trial.*?(\d+)\s*(day|week|month|year)s?/i
+      /(\d+)[\s-]*(day|week|month|year)s?[\s-]*(?:free[\s-]*)?trial/i,
+      /trial\s*period\s*:?\s*(\d+)[\s-]*(day|week|month|year)s?/i,
+      /(free|complimentary)[\s-]*trial.*?(\d+)[\s-]*(day|week|month|year)s?/i,
+      /try\s+(?:it\s+)?free\s+for\s+(\d+)[\s-]*(day|week|month|year)s?/i
     ];
     for (const pattern of trialPatterns) {
       const match = text.match(pattern);

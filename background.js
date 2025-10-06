@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'subscriptions';
+const PENDING_KEY = 'pendingDetection';
 const REMINDER_LEAD_DAYS = 1; // remind 1 day before rollover
 
 function getSubscriptions() {
@@ -12,6 +13,26 @@ function getSubscriptions() {
 function setSubscriptions(subscriptions) {
   return new Promise(resolve => {
     chrome.storage.local.set({ [STORAGE_KEY]: subscriptions }, () => resolve());
+  });
+}
+
+function getPendingDetection() {
+  return new Promise(resolve => {
+    chrome.storage.local.get({ [PENDING_KEY]: null }, data => {
+      resolve(data[PENDING_KEY] || null);
+    });
+  });
+}
+
+function setPendingDetection(detection) {
+  return new Promise(resolve => {
+    chrome.storage.local.set({ [PENDING_KEY]: detection }, () => resolve());
+  });
+}
+
+function clearPendingDetection() {
+  return new Promise(resolve => {
+    chrome.storage.local.remove(PENDING_KEY, () => resolve());
   });
 }
 
@@ -94,24 +115,70 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     removeSubscription(message.id).then(() => sendResponse({ removed: true }));
     return true;
   }
+  if (message?.type === 'resolvePendingDetection') {
+    resolvePendingDetection(message.decision, message.token).then(result => {
+      sendResponse(result);
+    });
+    return true;
+  }
   return false;
 });
 
 async function handleDetection(payload) {
   const subscriptions = await getSubscriptions();
+  const existing =
+    subscriptions.find(sub => sub.url === payload.url) ||
+    (payload.id ? subscriptions.find(sub => sub.id === payload.id) : null);
 
-  const existing = subscriptions.find(sub => sub.url === payload.url);
-  const { reminderTime, recurrence, rollover } = computeReminderTimestamps(payload);
+  const pendingDetection = {
+    token: uuid(),
+    existingId: existing?.id || null,
+    name: payload.name,
+    url: payload.url,
+    detectedAt: payload.detectedAt,
+    trial: payload.trial,
+    billing: payload.billing
+  };
+
+  await setPendingDetection(pendingDetection);
+  await openActionPopup();
+  return { pending: true, existing: Boolean(existing), token: pendingDetection.token };
+}
+
+async function resolvePendingDetection(decision, token) {
+  const pending = await getPendingDetection();
+  if (!pending || (token && token !== pending.token)) {
+    return { resolved: false };
+  }
+
+  await clearPendingDetection();
+
+  if (decision === 'dismiss') {
+    return { resolved: true, saved: false };
+  }
+
+  const result = await finalizePendingDetection(pending);
+  return { resolved: true, saved: true, ...result };
+}
+
+async function finalizePendingDetection(pending) {
+  const subscriptions = await getSubscriptions();
+  const matchById = pending.existingId
+    ? subscriptions.find(sub => sub.id === pending.existingId)
+    : null;
+  const existing = matchById || subscriptions.find(sub => sub.url === pending.url);
+  const { reminderTime, recurrence, rollover } = computeReminderTimestamps(pending);
 
   if (existing) {
-    existing.detectedAt = payload.detectedAt;
-    existing.trial = payload.trial;
-    existing.billing = payload.billing;
+    existing.name = pending.name;
+    existing.url = pending.url;
+    existing.detectedAt = pending.detectedAt;
+    existing.trial = pending.trial;
+    existing.billing = pending.billing;
     existing.nextReminderTime = reminderTime;
     existing.recurrence = recurrence;
     existing.nextRollover = rollover;
     await setSubscriptions(subscriptions);
-    await openActionPopup();
     await scheduleAlarm(existing);
     await createDetectionNotification(existing, true);
     return { id: existing.id, updated: true };
@@ -119,11 +186,11 @@ async function handleDetection(payload) {
 
   const subscription = {
     id: uuid(),
-    name: payload.name,
-    url: payload.url,
-    detectedAt: payload.detectedAt,
-    trial: payload.trial,
-    billing: payload.billing,
+    name: pending.name,
+    url: pending.url,
+    detectedAt: pending.detectedAt,
+    trial: pending.trial,
+    billing: pending.billing,
     nextReminderTime: reminderTime,
     recurrence,
     nextRollover: rollover
@@ -131,7 +198,6 @@ async function handleDetection(payload) {
 
   subscriptions.push(subscription);
   await setSubscriptions(subscriptions);
-  await openActionPopup();
   await scheduleAlarm(subscription);
   await createDetectionNotification(subscription, false);
   return { id: subscription.id, updated: false };
