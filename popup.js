@@ -14,6 +14,14 @@ const pendingDismiss = document.getElementById('pending-dismiss');
 let currentPending = null;
 let pendingInFlight = false;
 
+function getHostname(url) {
+  try {
+    return new URL(url).hostname;
+  } catch (error) {
+    return '';
+  }
+}
+
 async function fetchSubscriptions() {
   const data = await chrome.storage.local.get({ subscriptions: [] });
   return data.subscriptions.sort((a, b) => (b.detectedAt || '').localeCompare(a.detectedAt || ''));
@@ -61,11 +69,8 @@ function formatReminder(timestamp) {
 }
 
 function formatUrl(url) {
-  try {
-    return new URL(url).hostname;
-  } catch (error) {
-    return url;
-  }
+  const host = getHostname(url);
+  return host || url;
 }
 
 function renderPending(pending) {
@@ -124,8 +129,16 @@ function renderSubscription(subscription) {
   fragment.querySelector('.billing-value').innerHTML = formatBilling(subscription.billing);
   fragment.querySelector('.reminder-value').innerHTML = formatReminder(subscription.nextReminderTime);
   const link = fragment.querySelector('.url');
+  const hostname = getHostname(subscription.url);
   link.href = subscription.url;
-  link.textContent = new URL(subscription.url).hostname;
+  link.textContent = hostname || subscription.url;
+
+  const avatar = fragment.querySelector('.subscription-avatar');
+  if (avatar) {
+    const match = (hostname || subscription.name || '').match(/[a-z0-9]/i);
+    avatar.textContent = match ? match[0].toUpperCase() : '•';
+    avatar.title = hostname || subscription.name || 'Subscription';
+  }
 
   const removeBtn = fragment.querySelector('.remove');
   removeBtn.addEventListener('click', async () => {
@@ -146,7 +159,7 @@ async function load() {
   renderPending(pending);
   listEl.innerHTML = '';
   if (!subscriptions.length) {
-    emptyEl.style.display = pending ? 'none' : 'block';
+    emptyEl.style.display = pending ? 'none' : 'flex';
     return;
   }
   emptyEl.style.display = 'none';

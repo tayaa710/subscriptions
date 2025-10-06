@@ -6,58 +6,116 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <header>
-      <h1>Subscription Sentinel</h1>
-      <button id="refresh" title="Refresh detections">⟳</button>
-    </header>
-    <main>
-      <section id="pending" class="pending-card" hidden>
-        <h2 id="pending-title">Save this subscription?</h2>
-        <p id="pending-context"></p>
-        <dl>
-          <div class="row">
-            <dt>Trial</dt>
-            <dd id="pending-trial"></dd>
+    <div class="app">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+              <defs>
+                <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#6366f1" />
+                </linearGradient>
+              </defs>
+              <rect x="3" y="5" width="18" height="14" rx="4" fill="url(#brandGradient)"></rect>
+              <path d="M9.5 11.5l2 2 4-4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <div class="brand-copy">
+            <span class="brand-name">Subscription Sentinel</span>
+            <span class="brand-tagline">Professional trial & billing vault</span>
           </div>
-          <div class="row">
-            <dt>Billing</dt>
-            <dd id="pending-billing"></dd>
-          </div>
-          <div class="row">
-            <dt>Link</dt>
-            <dd><a id="pending-url" target="_blank" rel="noopener">Open page</a></dd>
-          </div>
-        </dl>
-        <div class="pending-actions">
-          <button id="pending-save" class="primary">Save</button>
-          <button id="pending-dismiss" class="secondary">Don't save</button>
         </div>
-      </section>
-      <p id="empty">No subscriptions detected yet. Browse a checkout page with free trial or billing terms and we'll capture it.</p>
-      <ul id="list"></ul>
-    </main>
+        <button id="refresh" class="icon-button" title="Refresh detections">
+          <svg viewBox="0 0 24 24" role="presentation" focusable="false" aria-hidden="true">
+            <path
+              d="M4 4v6h6M20 20v-6h-6M6.34 17.66A8 8 0 0 1 5 12c0-1.1.22-2.16.62-3.12m2.04-2.95A8 8 0 0 1 19 12c0 1.1-.22 2.16-.62 3.12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span class="sr-only">Refresh detections</span>
+        </button>
+      </header>
+      <main>
+        <section id="pending" class="pending-card card" hidden>
+          <div class="pending-header">
+            <div class="pending-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+                <path
+                  d="M12 3a5 5 0 0 0-5 5v2H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1V8a5 5 0 0 0-5-5Zm-3 5a3 3 0 1 1 6 0v2H9V8Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 id="pending-title">Save this subscription?</h2>
+              <p id="pending-context"></p>
+            </div>
+          </div>
+          <dl class="detail-grid">
+            <div class="detail">
+              <dt>Trial</dt>
+              <dd id="pending-trial"></dd>
+            </div>
+            <div class="detail">
+              <dt>Billing</dt>
+              <dd id="pending-billing"></dd>
+            </div>
+            <div class="detail">
+              <dt>Link</dt>
+              <dd><a id="pending-url" target="_blank" rel="noopener">Open page</a></dd>
+            </div>
+          </dl>
+          <div class="pending-actions">
+            <button id="pending-save" class="primary">Save to vault</button>
+            <button id="pending-dismiss" class="secondary">Don't save</button>
+          </div>
+        </section>
+        <section class="list-section">
+          <div class="section-header">
+            <h2>Saved subscriptions</h2>
+            <p>Renewal reminders stay synced across devices.</p>
+          </div>
+          <p id="empty" class="empty-state">
+            <span class="empty-icon" aria-hidden="true">🔍</span>
+            <span>No subscriptions detected yet. Complete a checkout with trial or billing details and we'll propose it here.</span>
+          </p>
+          <ul id="list"></ul>
+        </section>
+      </main>
+    </div>
     <template id="subscription-template">
-      <li class="subscription">
-        <div class="title-row">
-          <span class="name"></span>
-          <button class="remove" title="Remove subscription">✕</button>
+      <li class="subscription card">
+        <div class="subscription-header">
+          <div class="subscription-brand">
+            <span class="subscription-avatar" aria-hidden="true"></span>
+            <div class="subscription-summary">
+              <span class="name"></span>
+              <a class="url" target="_blank" rel="noopener">Open page</a>
+            </div>
+          </div>
+          <button class="remove icon-button" title="Remove subscription">
+            <svg viewBox="0 0 24 24" role="presentation" focusable="false" aria-hidden="true">
+              <path d="M6 6l12 12M6 18 18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <span class="sr-only">Remove subscription</span>
+          </button>
         </div>
-        <dl>
-          <div class="row trial">
+        <dl class="detail-grid">
+          <div class="detail trial">
             <dt>Trial</dt>
             <dd class="trial-value"></dd>
           </div>
-          <div class="row billing">
+          <div class="detail billing">
             <dt>Billing</dt>
             <dd class="billing-value"></dd>
           </div>
-          <div class="row reminder">
+          <div class="detail reminder">
             <dt>Next reminder</dt>
             <dd class="reminder-value"></dd>
-          </div>
-          <div class="row link">
-            <dt>Link</dt>
-            <dd><a class="url" target="_blank" rel="noopener">Open page</a></dd>
           </div>
         </dl>
       </li>
